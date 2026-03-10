@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "skills": {
+    "adk-cheatsheet": {
+      "source": "google/adk-docs",
+      "sourceType": "github",
+      "computedHash": "a38c60cac8bc202390bbf59e438a29ebd679ead13625f5d6526520a47d333057"
+    },
+    "adk-dev-guide": {
+      "source": "google/adk-docs",
+      "sourceType": "github",
+      "computedHash": "e3ab9a05dd09d4cd9f0d9196d0cfc640f0e69a7f83d330572c62997776982892"
+    },
+    "adk-scaffold": {
+      "source": "google/adk-docs",
+      "sourceType": "github",
+      "computedHash": "04008a4236754bf23eb132422bf2c04a8c6dbedfeb78897e5b49237b698c701a"
+    }
+  }
+}
