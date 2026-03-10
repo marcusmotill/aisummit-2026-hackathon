@@ -62,18 +62,41 @@ def get_current_time(query: str) -> str:
     now = datetime.datetime.now(tz)
     return f"The current time for query {query} is {now.strftime('%Y-%m-%d %H:%M:%S %Z%z')}"
 
+from google.adk.tools import AgentTool
+from .auditor import get_auditor_agent
+from .analyst import get_analyst_agent
+from .synthesizer import get_synthesizer_agent
 
 root_agent = Agent(
-    name="root_agent",
+    name="lead_seo_strategist",
     model=Gemini(
         model="gemini-3-flash-preview",
         retry_options=types.HttpRetryOptions(attempts=3),
     ),
-    instruction="You are a helpful AI assistant designed to provide accurate and useful information.",
-    tools=[get_weather, get_current_time],
+    instruction=(
+        "You are the Lead SEO Strategist. Your goal is to identify high-value content opportunities "
+        "by coordinating a team of specialized 'Expert' tools: Auditor, Analyst, and Synthesizer. "
+        "\n\nWorkflow:"
+        "\n1. Call the `auditor_agent` tool to establish a 'Thematic Authority Profile' for the target site."
+        "\n2. Call the `analyst_agent` tool to identify market trends and competitor focus areas."
+        "\n3. Provide both reports to the `synthesizer_agent` tool to generate the final 'Content Gap Report'."
+        "\n4. Present the final report to the user in a clear, professional Markdown format."
+    ),
+    tools=[
+        AgentTool(get_auditor_agent()),
+        AgentTool(get_analyst_agent()),
+        AgentTool(get_synthesizer_agent()),
+    ],
 )
+
+from google.adk.plugins.global_instruction_plugin import GlobalInstructionPlugin
 
 app = App(
     root_agent=root_agent,
     name="app",
+    plugins=[
+        GlobalInstructionPlugin(
+            global_instruction="The current year is 2026. Focus all content strategy, market analysis, and search trends on this year (2026) and future-looking opportunities, avoiding outdated 2024/2025 context unless for historical comparison."
+        )
+    ],
 )
