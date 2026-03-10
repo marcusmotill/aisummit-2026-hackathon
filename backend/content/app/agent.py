@@ -63,17 +63,41 @@ def get_current_time(query: str) -> str:
     return f"The current time for query {query} is {now.strftime('%Y-%m-%d %H:%M:%S %Z%z')}"
 
 
+from google.adk.tools import AgentTool
+from google.adk.plugins.global_instruction_plugin import GlobalInstructionPlugin
+from .deconstructor import get_deconstructor_agent
+from .copywriter import get_copywriter_agent
+from .visualizer import get_visualizer_agent
+
 root_agent = Agent(
-    name="root_agent",
+    name="campaign_builder_orchestrator",
     model=Gemini(
         model="gemini-3-flash-preview",
         retry_options=types.HttpRetryOptions(attempts=3),
     ),
-    instruction="You are a helpful AI assistant designed to provide accurate and useful information.",
-    tools=[get_weather, get_current_time],
+    instruction=(
+        "You are the Campaign Builder Orchestrator. Your goal is to transform long-form content "
+        "into a comprehensive 'Campaign-in-a-Box' by coordinating a team of expert tools. "
+        "\n\nWorkflow:"
+        "\n1. Call the `deconstructor_agent` tool to extract core themes, arguments, and quotes from the provided draft."
+        "\n2. Use the extracted assets as input for the `copywriter_agent` and `visualizer_agent` tools."
+        "\n3. Coordinate the `copywriter_agent` to generate tailored copy for Twitter, LinkedIn, and Email."
+        "\n4. Coordinate the `visualizer_agent` to suggest or generate brand-aligned visuals for each asset."
+        "\n5. Compile all assets into a final, professional Markdown 'Campaign Report'."
+    ),
+    tools=[
+        AgentTool(get_deconstructor_agent()),
+        AgentTool(get_copywriter_agent()),
+        AgentTool(get_visualizer_agent()),
+    ],
 )
 
 app = App(
     root_agent=root_agent,
     name="app",
+    plugins=[
+        GlobalInstructionPlugin(
+            global_instruction="The current year is 2026. All marketing campaigns should be designed for present-day (2026) trends and audiences. Avoid outdated 2024/2025 context."
+        )
+    ],
 )
