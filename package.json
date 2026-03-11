@@ -1,0 +1,11 @@
+{
+  "name": "aisummit-hackathon",
+  "version": "1.0.0",
+  "description": "Orchestrator for SEO Strategy and Content Engine",
+  "scripts": {
+    "dev:strategy": "cd backend/strategy && uv run adk api_server --port 8000 --allow_origins \"*\" --host 0.0.0.0",
+    "dev:content": "cd backend/content && uv run adk api_server --port 8001 --allow_origins \"*\" --host 0.0.0.0",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "npx -y concurrently \"npm run dev:strategy\" \"npm run dev:content\" \"npm run dev:frontend\""
+  }
+}

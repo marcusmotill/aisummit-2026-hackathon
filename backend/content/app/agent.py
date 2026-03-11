@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import datetime
+import json
 from zoneinfo import ZoneInfo
 
 from google.adk.agents import Agent
@@ -69,6 +70,35 @@ from .deconstructor import get_deconstructor_agent
 from .copywriter import get_copywriter_agent
 from .visualizer import get_visualizer_agent
 
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from google.adk.agents.callback_context import CallbackContext
+
+class CampaignAsset(BaseModel):
+    title: str = Field(description="Title of the asset (e.g., Twitter Thread, LinkedIn Post)")
+    content: str = Field(description="The actual copy for the asset")
+    visual_suggestion: str = Field(description="Suggested visual asset or image prompt")
+    channel: str = Field(description="The target channel (Twitter, LinkedIn, Email, etc.)")
+
+class CampaignReport(BaseModel):
+    summary: str = Field(description="Overall campaign theme and objectives")
+    assets: List[CampaignAsset] = Field(description="List of multi-channel promotional assets")
+
+async def save_campaign_report(callback_context: CallbackContext) -> None:
+    """Saves the final Campaign Report as a JSON artifact via after_agent_callback.
+    """
+    # Retrieve the structured output from the session state
+    report_data = callback_context.state.get("campaign_report")
+    if not report_data:
+        return None
+
+    # Save as artifact
+    filename = "campaign_report.json"
+    content_json = json.dumps(report_data, indent=2)
+    part = types.Part.from_text(text=content_json)
+    await callback_context.save_artifact(filename, part)
+    return None
+
 root_agent = Agent(
     name="campaign_builder_orchestrator",
     model=Gemini(
@@ -83,13 +113,16 @@ root_agent = Agent(
         "\n2. Use the extracted assets as input for the `copywriter_agent` and `visualizer_agent` tools."
         "\n3. Coordinate the `copywriter_agent` to generate tailored copy for Twitter, LinkedIn, and Email."
         "\n4. Coordinate the `visualizer_agent` to suggest or generate brand-aligned visuals for each asset."
-        "\n5. Compile all assets into a final, professional Markdown 'Campaign Report'."
+        "\n5. Compile all assets into a structured 'Campaign Report'."
     ),
     tools=[
         AgentTool(get_deconstructor_agent()),
         AgentTool(get_copywriter_agent()),
         AgentTool(get_visualizer_agent()),
     ],
+    output_schema=CampaignReport,
+    output_key="campaign_report",
+    after_agent_callback=save_campaign_report,
 )
 
 app = App(
